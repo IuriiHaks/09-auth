@@ -14,7 +14,7 @@ export async function fetchNotes(
   tag?: string
 ): Promise<NotesResponse> {
   const params: Record<string, string | number> = {
-    search,
+    // search,
     page,
     perPage,
   }

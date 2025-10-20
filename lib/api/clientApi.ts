@@ -6,7 +6,7 @@ export interface NotesResponse {
   notes: Note[]
   totalPages: number
 }
-
+// отримання списку нотаток з підтримкою пошуку, пагінації та фільтрації за тегом
 export async function fetchNotes(
   search = '',
   page = 1,
@@ -14,7 +14,7 @@ export async function fetchNotes(
   tag?: string
 ): Promise<NotesResponse> {
   const params: Record<string, string | number> = {
-    search,
+    // search,
     page,
     perPage,
   }
@@ -24,20 +24,23 @@ export async function fetchNotes(
 
   const { data } = await api.get<NotesResponse>('/notes', { params })
 
-  console.log('Fetched notes:', params, data)
+  // console.log('Fetched notes:', params, data)
   return data
 }
 
+// отримання нотатки за її ідентифікатором
 export async function fetchNoteById(id: string): Promise<Note> {
   const { data } = await api.get<Note>(`/notes/${id}`)
   return data
 }
 
+// створення нової нотатки
 export async function createNote(payload: CreateNoteRequest): Promise<Note> {
   const { data } = await api.post<Note>('/notes', payload)
   return data
 }
 
+// видалення нотатки за її ідентифікатором
 export async function deleteNote(id: string): Promise<Note> {
   const { data } = await api.delete<Note>(`/notes/${id}`)
   return data
