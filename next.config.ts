@@ -6,15 +6,30 @@
 
 // export default nextConfig
 
-const nextConfig = {
-  async rewrites() {
-    return [
+// const nextConfig = {
+//   async rewrites() {
+//     return [
+//       {
+//         source: '/api/:path*',
+//         destination: 'https://notehub-api.goit.study/:path*',
+//       },
+//     ]
+//   },
+// }
+
+// module.exports = nextConfig
+
+import type { NextConfig } from 'next'
+
+const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
       {
-        source: '/api/:path*',
-        destination: 'https://notehub-api.goit.study/:path*',
+        protocol: 'https',
+        hostname: 'ac.goit.global',
       },
-    ]
+    ],
   },
 }
 
-module.exports = nextConfig
+export default nextConfig
