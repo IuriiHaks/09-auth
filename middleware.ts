@@ -1,70 +1,78 @@
-// import { NextResponse, NextRequest } from 'next/server'
-// import { cookies } from 'next/headers'
-// import { checkSession } from './lib/api/serverApi'
-// import { parse } from 'cookie'
+import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+import { parse } from 'cookie'
+import { checkSession } from './lib/api/serverApi'
 
-// export function middleware(request: NextRequest) {
-//   const token = request.cookies.get('session')?.value
-//   const isAuthPage =
-//     request.nextUrl.pathname.startsWith('/sign-in') ||
-//     request.nextUrl.pathname.startsWith('/sign-up')
-
-//   if (!token && request.nextUrl.pathname.startsWith('/profile')) {
-//     return NextResponse.redirect(new URL('/sign-in', request.url))
-//   }
-
-//   if (token && isAuthPage) {
-//     return NextResponse.redirect(new URL('/profile', request.url))
-//   }
-
-//   return NextResponse.next()
-// }
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { checkSession } from '@/lib/api/serverApi'
-
-export const config = {
-  matcher: ['/profile/:path*', '/notes/:path*', '/sign-in', '/sign-up'],
-}
+const privateRoutes = ['/profile', '/notes']
+const authRoutes = ['/sign-in', '/sign-up']
 
 export async function middleware(request: NextRequest) {
-  const accessToken = request.cookies.get('accessToken')?.value
-  const refreshToken = request.cookies.get('refreshToken')?.value
+  const { pathname } = request.nextUrl
+  const cookieStore = await cookies()
+  const accessToken = cookieStore.get('accessToken')?.value
+  const refreshToken = cookieStore.get('refreshToken')?.value
 
-  const authPages = ['/sign-in', '/sign-up']
-  const privatePages = ['/profile', '/notes']
+  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route))
+  const isPrivateRoute = privateRoutes.some((route) =>
+    pathname.startsWith(route)
+  )
 
-  const currentPath = request.nextUrl.pathname
+  if (!accessToken) {
+    if (refreshToken) {
+      const data = await checkSession()
+      const setCookie = data.headers['set-cookie']
 
-  // Якщо є accessToken — користувач авторизований
-  let isAuthenticated = Boolean(accessToken)
+      if (setCookie) {
+        const cookieArray = Array.isArray(setCookie) ? setCookie : [setCookie]
+        for (const cookieStr of cookieArray) {
+          const parsed = parse(cookieStr)
+          const options = {
+            expires: parsed.Expires ? new Date(parsed.Expires) : undefined,
+            path: parsed.Path,
+            maxAge: Number(parsed['Max-Age']),
+          }
+          if (parsed.accessToken)
+            cookieStore.set('accessToken', parsed.accessToken, options)
+          if (parsed.refreshToken)
+            cookieStore.set('refreshToken', parsed.refreshToken, options)
+        }
 
-  // Якщо accessToken відсутній, але є refreshToken — спробуємо поновити сесію
-  if (!isAuthenticated && refreshToken) {
-    try {
-      const { data: session } = await checkSession()
-      isAuthenticated = Boolean(session?.success)
-    } catch {
-      isAuthenticated = false
+        if (isAuthRoute) {
+          return NextResponse.redirect(new URL('/', request.url), {
+            headers: {
+              Cookie: cookieStore.toString(),
+            },
+          })
+        }
+
+        if (isPrivateRoute) {
+          return NextResponse.next({
+            headers: {
+              Cookie: cookieStore.toString(),
+            },
+          })
+        }
+      }
+    }
+
+    if (isAuthRoute) {
+      return NextResponse.next()
+    }
+
+    if (isPrivateRoute) {
+      return NextResponse.redirect(new URL('/sign-in', request.url))
     }
   }
 
-  // 1️⃣ Неавторизований користувач → приватна сторінка → редирект на /sign-in
-  if (
-    !isAuthenticated &&
-    privatePages.some((path) => currentPath.startsWith(path))
-  ) {
-    return NextResponse.redirect(new URL('/sign-in', request.url))
+  if (isAuthRoute) {
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // 2️⃣ Авторизований користувач → сторінка автентифікації → редирект на /profile
-  if (
-    isAuthenticated &&
-    authPages.some((path) => currentPath.startsWith(path))
-  ) {
-    return NextResponse.redirect(new URL('/profile', request.url))
+  if (isPrivateRoute) {
+    return NextResponse.next()
   }
+}
 
-  // 3️⃣ Інакше — пропускаємо запит далі
-  return NextResponse.next()
+export const config = {
+  matcher: ['/profile/:path*', '/notes/:path*', '/sign-in', '/sign-up'],
 }
