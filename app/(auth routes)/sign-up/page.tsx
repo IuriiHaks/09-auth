@@ -4,23 +4,26 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { register } from '@/lib/api/clientApi'
 import css from './SignUpPage.module.css'
+import { useAuthStore } from '@/lib/store/authStore'
 
 export default function SignUpPage() {
   const [error, setError] = useState('')
   const router = useRouter()
+  const { setUser } = useAuthStore()
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setError('')
+    // setError('')
 
     const formData = new FormData(e.currentTarget)
     const email = formData.get('email') as string
     const password = formData.get('password') as string
 
     try {
-      await register(email, password)
+      const user = await register(email, password)
+      setUser(user) // встановлюємо користувача в стан після реєстрації
       router.push('/profile')
-    } catch (err: unknown) {
+    } catch (err) {
       let message = 'Registration failed'
       if (err instanceof Error) {
         message = err.message

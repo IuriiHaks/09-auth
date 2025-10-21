@@ -1,6 +1,6 @@
 // детальна сторінка нотатки в модальному вікні
 import { dehydrate, QueryClient } from '@tanstack/react-query'
-import { fetchNoteById } from '@/lib/api/clientApi'
+import { fetchNoteById } from '@/lib/api/serverApi'
 import TanStackProvider from '@/components/TanStackProvider/TanStackProvider'
 import NotePreviewClient from '@/app/@modal/(.)notes/[id]/NotePreview.client'
 

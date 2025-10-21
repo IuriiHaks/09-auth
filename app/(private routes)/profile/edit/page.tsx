@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getMe, updateMe } from '@/lib/api/clientApi'
 import Image from 'next/image'
 import css from '../../profile/edit/EditProfilePage.module.css'
+import { useAuthStore } from '@/lib/store/authStore'
 
 export default function EditProfilePage() {
   const [username, setUsername] = useState('')
@@ -12,6 +13,7 @@ export default function EditProfilePage() {
   const [avatar, setAvatar] = useState('')
   const [error, setError] = useState('')
   const router = useRouter()
+  const { setUser } = useAuthStore()
 
   useEffect(() => {
     async function fetchUser() {
@@ -29,9 +31,10 @@ export default function EditProfilePage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setError('')
+
     try {
-      await updateMe(username)
+      const updatedUser = await updateMe(username)
+      setUser(updatedUser)
       router.push('/profile')
     } catch (err: unknown) {
       if (err instanceof Error) {

@@ -1,6 +1,7 @@
 import { api } from './api'
 import type { User } from '@/types/user'
 import type { Note } from '@/types/note'
+import { cookies } from 'next/headers'
 
 export interface NotesResponse {
   notes: Note[]
@@ -24,23 +25,38 @@ export async function fetchNotes(
 
   const { data } = await api.get<NotesResponse>('/notes', { params })
 
-  console.log('Fetched notes:', params, data)
   return data
 }
 
 export async function fetchNoteById(id: string): Promise<Note> {
-  const { data } = await api.get<Note>(`/notes/${id}`)
+  const cookieStore = await cookies()
+
+  const { data } = await api.get<Note>(`/notes/${id}`, {
+    headers: {
+      cookie: cookieStore.toString(), // передаємо кукі для автентифікації
+    },
+  })
   return data
 }
 
 // отримання даних користувача
 export async function getMe(): Promise<User> {
-  const res = await api.get<User>('/users/me')
+  const cookieStore = await cookies()
+  const res = await api.get<User>('/users/me', {
+    headers: {
+      cookie: cookieStore.toString(), // передаємо кукі для автентифікації
+    },
+  })
   return res.data
 }
 
 // перевірка сесії користувача
 export async function checkSession() {
-  const { data } = await api.get('/auth/session')
-  return data
+  const cookieStore = await cookies()
+  const res = await api.get('/auth/session', {
+    headers: {
+      cookie: cookieStore.toString(), // передаємо кукі для автентифікації
+    },
+  })
+  return res
 }

@@ -54,7 +54,7 @@ export async function register(email: string, password: string): Promise<User> {
 
 // вхід користувача
 export async function login(email: string, password: string): Promise<User> {
-  const { data } = await api.post('/auth/login', { email, password })
+  const { data } = await api.post<User>('/auth/login', { email, password })
   return data
 }
 
